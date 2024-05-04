@@ -2,15 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameOverUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI deliveredRecipeText;
+    [SerializeField] private Button continueBtn;
 
     private void Start()
     {
         GameManager.Instance.OnStateChanged += GameManager_OnStateChanged;
-
+        continueBtn.onClick.AddListener(() => Loader.LoadScene(Loader.Scene.Gameplay));
         Hide();
     }
 
