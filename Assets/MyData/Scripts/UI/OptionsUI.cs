@@ -69,7 +69,7 @@ public class OptionsUI : MonoBehaviour
 
     private void Start()
     {
-        GameManager.Instance.OnPauseStatusChanged += GameManager_OnPauseStatusChanged;
+        GameManager.Instance.OnLocalPauseStatusChanged += GameManager_OnPauseStatusChanged;
 
         UpdateVisuals();
 
@@ -79,7 +79,7 @@ public class OptionsUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.Instance.OnPauseStatusChanged -= GameManager_OnPauseStatusChanged;
+        GameManager.Instance.OnLocalPauseStatusChanged -= GameManager_OnPauseStatusChanged;
     }
 
     private void GameManager_OnPauseStatusChanged(bool isPaused)

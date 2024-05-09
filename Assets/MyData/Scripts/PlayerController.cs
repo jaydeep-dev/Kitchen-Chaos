@@ -45,6 +45,14 @@ public class PlayerController : NetworkBehaviour, IKitchenObjectParent
         OnAnyPlayerSpawned?.Invoke(this, EventArgs.Empty);
     }
 
+    public override void OnNetworkDespawn()
+    {
+        if (IsServer && HasKitchenObject())
+        {
+            KitchenObject.DestroyKitchenObject(GetKitchenObject());
+        }
+    }
+
     private void OnEnable()
     {
         InputHandler.Instance.OnInteractAction += OnInteractAction;
