@@ -23,7 +23,7 @@ public class AudioManager : MonoBehaviour
     {
         DeliveryManager.Instance.OnRecipeSuccess += DelieveryManager_OnRecipeSuccess;
         DeliveryManager.Instance.OnRecipeFailed += DelieveryManager_OnRecipeFailed;
-        PlayerController.Instance.OnPickedupSomething += Player_OnPickedupSomething;
+        PlayerController.OnAnyPlayerPickedupSomething += Player_OnPickedupSomething;
         BaseCounter.OnAnythingPlaced += BaseCounter_OnAnythingPlaced;
         CuttingCounter.OnAnyCut += CuttingCounter_OnAnyCut;
         TrashCounter.OnAnyObjectTrashed += TrashCounter_OnAnyObjectTrashed;

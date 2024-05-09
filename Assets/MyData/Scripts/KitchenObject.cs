@@ -1,10 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class KitchenObject : MonoBehaviour
+public class KitchenObject : NetworkBehaviour
 {
     [SerializeField] private KitchenObjectSO kitchenObjectSO;
+
+    private FollowTransform followTransform;
 
     private IKitchenObjectParent kitchenObjectParent;
 
@@ -12,23 +15,14 @@ public class KitchenObject : MonoBehaviour
 
     public IKitchenObjectParent GetKitchenObjectParent() { return kitchenObjectParent; }
 
+    protected virtual void Awake()
+    {
+        followTransform = GetComponent<FollowTransform>();
+    }
+
     public void SetKitchenObjectParent(IKitchenObjectParent kitchenObjectParent) 
     {
-        if(this.kitchenObjectParent != null)
-        {
-            this.kitchenObjectParent.ClearKitchenObject();
-        }
-
-        this.kitchenObjectParent = kitchenObjectParent;
-        if(kitchenObjectParent.HasKitchenObject())
-        {
-            Debug.LogError("Counter already has kitchen object");
-        }
-
-        kitchenObjectParent.SetKitchenObject(this);
-
-        transform.parent = kitchenObjectParent.GetKitchenObjectFollowTransform();
-        transform.localPosition = Vector3.zero;
+        SetKitchenObjectParentServerRpc(kitchenObjectParent.GetNetworkObject());   
     }
 
     public void DestroySelf()
@@ -52,11 +46,33 @@ public class KitchenObject : MonoBehaviour
         }
     }
 
-    public static KitchenObject SpawnKitchenObject(KitchenObjectSO kitchenObjectSO, IKitchenObjectParent kitchenObjectParent)
+    public static void SpawnKitchenObject(KitchenObjectSO kitchenObjectSO, IKitchenObjectParent kitchenObjectParent)
     {
-        var prefab = Instantiate(kitchenObjectSO.prefab);
-        KitchenObject kitchenObject = prefab.GetComponent<KitchenObject>();
-        kitchenObject.SetKitchenObjectParent(kitchenObjectParent);
-        return kitchenObject;
+        KitchenGameMultiplayer.Instance.SpawnKitchenObject(kitchenObjectSO, kitchenObjectParent);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void SetKitchenObjectParentServerRpc(NetworkObjectReference kitchenObjectParentNetworkObjectRef)
+    {
+        SetKitchenObjectParentClientRpc(kitchenObjectParentNetworkObjectRef);
+    }
+
+    [ClientRpc]
+    private void SetKitchenObjectParentClientRpc(NetworkObjectReference kitchenObjectParentNetworkObjectRef)
+    {
+        kitchenObjectParentNetworkObjectRef.TryGet(out var kitchenObjectNetworkObject);
+        var kitchenObjectParent = kitchenObjectNetworkObject.GetComponent<IKitchenObjectParent>();
+
+        this.kitchenObjectParent?.ClearKitchenObject();
+
+        this.kitchenObjectParent = kitchenObjectParent;
+        if (kitchenObjectParent.HasKitchenObject())
+        {
+            Debug.LogError("Counter already has kitchen object");
+        }
+
+        kitchenObjectParent.SetKitchenObject(this);
+
+        followTransform.SetTargetTransform(kitchenObjectParent.GetKitchenObjectFollowTransform());
     }
 }

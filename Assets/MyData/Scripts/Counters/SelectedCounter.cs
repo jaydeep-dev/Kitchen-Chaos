@@ -9,12 +9,19 @@ public class SelectedCounter : MonoBehaviour
 
     private void Start()
     {
-        PlayerController.Instance.OnSelectedCounterChanged += OnSelectedCounterChanged;
+        if (PlayerController.LocalInstance)
+            PlayerController.LocalInstance.OnSelectedCounterChanged += OnSelectedCounterChanged;
+        else
+            PlayerController.OnAnyPlayerSpawned += PlayerController_OnAnyPlayerSpawned;
     }
 
-    private void OnDestroy()
+    private void PlayerController_OnAnyPlayerSpawned(object sender, System.EventArgs e)
     {
-        PlayerController.Instance.OnSelectedCounterChanged -= OnSelectedCounterChanged;
+        if (PlayerController.LocalInstance)
+        {
+            PlayerController.LocalInstance.OnSelectedCounterChanged -= OnSelectedCounterChanged;
+            PlayerController.LocalInstance.OnSelectedCounterChanged += OnSelectedCounterChanged;
+        }
     }
 
     private void OnSelectedCounterChanged(object sender, PlayerController.OnSelectedCounterChangedEventArgs e)

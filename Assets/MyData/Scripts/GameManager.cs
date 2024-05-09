@@ -21,9 +21,11 @@ public class GameManager : MonoBehaviour
 
     private State state;
 
-    private float countdownToStartCountdown = 3f;
+    //private float countdownToStartCountdown = 3f; // Default
+    private float countdownToStartCountdown = 1f; // Testing
     private float gameplayTimer;
-    private float maxGameplayTimer = 5 * 60f;
+    //private float maxGameplayTimer = 5 * 60f; // Default
+    private float maxGameplayTimer = 15 * 60f;
     private bool isGamePaused = false;
 
     private void Awake()
@@ -32,10 +34,17 @@ public class GameManager : MonoBehaviour
         state = State.WaitingToStart;
     }
 
-    private void Start()
+    private IEnumerator Start()
     {
         InputHandler.Instance.OnPauseAction += InputHandler_OnPauseAction;
         InputHandler.Instance.OnInteractAction += InputHandler_OnInteractAction;
+
+        yield return new WaitForSecondsRealtime(.25f);
+
+        // TESTING CODE TO AUTOMATICALLY START GAME
+        state = State.CountdownToStart;
+        OnStateChanged?.Invoke(this, EventArgs.Empty);
+        Debug.Log("<Gamemanager> Firing Testing State Change");
     }
 
     private void InputHandler_OnInteractAction(object sender, EventArgs e)

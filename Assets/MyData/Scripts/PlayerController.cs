@@ -1,14 +1,23 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour, IKitchenObjectParent
+public class PlayerController : NetworkBehaviour, IKitchenObjectParent
 {
-    public static PlayerController Instance { get; private set; }
+    public static PlayerController LocalInstance { get; private set; }
+
+    public static event EventHandler OnAnyPlayerSpawned;
+    public static event EventHandler OnAnyPlayerPickedupSomething;
+
+    public static void ResetStaticData()
+    {
+        OnAnyPlayerSpawned = null;
+        OnAnyPlayerPickedupSomething = null;
+    }
 
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private InputHandler inputHandler;
     [SerializeField] private LayerMask counterLayerMask;
     [SerializeField] private Transform kitchenObjectHoldPoint;
 
@@ -25,20 +34,20 @@ public class PlayerController : MonoBehaviour, IKitchenObjectParent
     private BaseCounter selectedCounter;
     private KitchenObject kitchenObject;
 
-
-    private void Awake()
+    public override void OnNetworkSpawn()
     {
-        if (Instance != null)
+        if(IsOwner)
         {
-            Debug.LogError("More than 1 player in the scene");
+            LocalInstance = this;
         }
-        Instance = this;
+
+        OnAnyPlayerSpawned?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnEnable()
     {
-        inputHandler.OnInteractAction += OnInteractAction;
-        inputHandler.OnInteractAltAction += OnInteractAltAction;
+        InputHandler.Instance.OnInteractAction += OnInteractAction;
+        InputHandler.Instance.OnInteractAltAction += OnInteractAltAction;
     }
 
     private void OnInteractAltAction(object sender, EventArgs e)
@@ -63,13 +72,18 @@ public class PlayerController : MonoBehaviour, IKitchenObjectParent
 
     private void OnDisable()
     {
-        inputHandler.OnInteractAction -= OnInteractAction;
-        inputHandler.OnInteractAltAction -= OnInteractAltAction;
+        InputHandler.Instance.OnInteractAction -= OnInteractAction;
+        InputHandler.Instance.OnInteractAltAction -= OnInteractAltAction;
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (!IsOwner)
+        {
+            return;
+        }
+
         HandleMovement();
 
         HandleInteraction();
@@ -77,7 +91,7 @@ public class PlayerController : MonoBehaviour, IKitchenObjectParent
 
     private void HandleInteraction()
     {
-        var moveInput = inputHandler.GetInputVector();
+        var moveInput = InputHandler.Instance.GetInputVector();
 
         var moveDir = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
 
@@ -104,7 +118,7 @@ public class PlayerController : MonoBehaviour, IKitchenObjectParent
 
     private void HandleMovement()
     {
-        var moveInput = inputHandler.GetInputVector();
+        var moveInput = InputHandler.Instance.GetInputVector();
 
         var moveDir = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
 
@@ -168,10 +182,16 @@ public class PlayerController : MonoBehaviour, IKitchenObjectParent
         if(kitchenObject !=  null)
         {
             OnPickedupSomething?.Invoke(this, EventArgs.Empty);
+            OnAnyPlayerPickedupSomething?.Invoke(this, EventArgs.Empty);
         }
     }
 
     public void ClearKitchenObject() { kitchenObject = null; }
 
     public bool HasKitchenObject() { return kitchenObject != null; }
+
+    public NetworkObject GetNetworkObject()
+    {
+        return NetworkObject;
+    }
 }

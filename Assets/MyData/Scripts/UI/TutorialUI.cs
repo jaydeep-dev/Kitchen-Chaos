@@ -22,6 +22,7 @@ public class TutorialUI : MonoBehaviour
     {
         InputHandler.Instance.OnRebindBindingCompleted += InputHandler_OnRebindBindingCompleted;
         GameManager.Instance.OnStateChanged += GameManager_OnStateChanged;
+        Debug.Log("<TutorialUI> Tutorial UI Subscribed");
         Show();
         UpdateVisual();
     }
@@ -31,6 +32,7 @@ public class TutorialUI : MonoBehaviour
         if (GameManager.Instance.IsGameCountdownToStart())
         {
             Hide();
+            Debug.Log("<TutorialUI> Hiding Tutorial UI");
         }
     }
 
