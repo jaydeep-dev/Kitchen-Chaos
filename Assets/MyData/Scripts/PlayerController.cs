@@ -19,6 +19,7 @@ public class PlayerController : NetworkBehaviour, IKitchenObjectParent
 
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private LayerMask counterLayerMask;
+    [SerializeField] private LayerMask collisionLayerMask;
     [SerializeField] private Transform kitchenObjectHoldPoint;
 
     public event EventHandler OnPickedupSomething;
@@ -123,15 +124,14 @@ public class PlayerController : NetworkBehaviour, IKitchenObjectParent
         var moveDir = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
 
         float playerRadius = .7f;
-        float playerHeight = 2f;
         float moveDistance = moveSpeed * Time.deltaTime;
-        bool canMove = !Physics.CapsuleCast(transform.position, transform.position + Vector3.up * playerHeight, playerRadius, moveDir, moveDistance);
+        bool canMove = !Physics.BoxCast(transform.position, Vector3.one * playerRadius, moveDir, Quaternion.identity,moveDistance, collisionLayerMask);
 
         if (!canMove)
         {
             // Attempt Only X Movement
             var moveDirX = new Vector3(moveDir.x, 0, 0).normalized;
-            canMove = moveDir.x != 0 && !Physics.CapsuleCast(transform.position, transform.position + Vector3.up * playerHeight, playerRadius, moveDirX, moveDistance);
+            canMove = moveDir.x != 0 && !Physics.BoxCast(transform.position, Vector3.one * playerRadius, moveDirX, Quaternion.identity, moveDistance, collisionLayerMask);
 
             if (canMove)
             {
@@ -141,7 +141,7 @@ public class PlayerController : NetworkBehaviour, IKitchenObjectParent
             {
                 // Attempt Only Z Movement
                 var moveDirZ = new Vector3(0, 0, moveDir.z).normalized;
-                canMove = moveDir.z != 0 && !Physics.CapsuleCast(transform.position, transform.position + Vector3.up * playerHeight, playerRadius, moveDirZ, moveDistance);
+                canMove = moveDir.z != 0 && !Physics.BoxCast(transform.position, Vector3.one * playerRadius, moveDirZ, Quaternion.identity, moveDistance, collisionLayerMask);
 
                 if (canMove)
                 {

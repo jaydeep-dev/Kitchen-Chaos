@@ -19,10 +19,35 @@ public class KitchenGameMultiplayer : NetworkBehaviour
         SpawnKitchenObjectServerRpc(GetIndexFromKitchenObjectSO(kitchenObjectSO), kitchenObjectParent.GetNetworkObject());
     }
 
+    public void DestroyKitchenObject(KitchenObject kitchenObject)
+    {
+        DestroyKitchenObjectServerRpc(kitchenObject.NetworkObject);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void DestroyKitchenObjectServerRpc(NetworkObjectReference networkObjectReference)
+    {
+        networkObjectReference.TryGet(out var kitchenObjectNetworkObject);
+        var kitchenObject = kitchenObjectNetworkObject.GetComponent<KitchenObject>();
+
+        ClearKitchenParentClientRpc(networkObjectReference);
+
+        kitchenObject.DestroySelf();
+    }
+
+    [ClientRpc]
+    private void ClearKitchenParentClientRpc(NetworkObjectReference networkObjectReference)
+    {
+        networkObjectReference.TryGet(out var kitchenObjectNetworkObject);
+        var kitchenObject = kitchenObjectNetworkObject.GetComponent<KitchenObject>();
+
+        kitchenObject.ClearKitchenObjectOnParent();
+    }
+
     [ServerRpc(RequireOwnership = false)]
     private void SpawnKitchenObjectServerRpc(int kitchenObjectSOIndex, NetworkObjectReference kitchenObjectParentNetworkObjectRef)
     {
-        var kitchenObjectSO = GetKitchenObjectFromIndex(kitchenObjectSOIndex);
+        var kitchenObjectSO = GetKitchenObjectSOFromIndex(kitchenObjectSOIndex);
         var prefab = Instantiate(kitchenObjectSO.prefab);
 
         var prefabNetworkObject = prefab.GetComponent<NetworkObject>();
@@ -35,12 +60,12 @@ public class KitchenGameMultiplayer : NetworkBehaviour
         kitchenObject.SetKitchenObjectParent(kitchenObjectParent);
     }
 
-    private int GetIndexFromKitchenObjectSO(KitchenObjectSO kitchenObjectSO)
+    public int GetIndexFromKitchenObjectSO(KitchenObjectSO kitchenObjectSO)
     {
         return kitchenObjectsListSO.kitchenObjectsSOList.IndexOf(kitchenObjectSO);
     }
 
-    private KitchenObjectSO GetKitchenObjectFromIndex(int index)
+    public KitchenObjectSO GetKitchenObjectSOFromIndex(int index)
     {
         return kitchenObjectsListSO.kitchenObjectsSOList[index];
     }
