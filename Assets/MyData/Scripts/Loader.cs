@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,7 +10,9 @@ public static class Loader
     {
         MainMenu,
         Gameplay,
-        Loader
+        Loader,
+        Lobby,
+        CharacterSelection,
     }
 
     private static Scene targetScene;
@@ -20,6 +23,12 @@ public static class Loader
 
         Debug.Log($"<<Loader>> Loading scene: {targetScene}");
         SceneManager.LoadScene(Scene.Loader.ToString());
+    }
+
+    public static void LoadSceneViaNetwork(Scene scene)
+    {
+        Debug.Log($"<<Loader>> Loading scene via network: {scene}");
+        NetworkManager.Singleton.SceneManager.LoadScene(scene.ToString(), LoadSceneMode.Single);
     }
 
     public static void LoaderCallback()

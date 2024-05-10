@@ -11,29 +11,27 @@ public class PlayerController : NetworkBehaviour, IKitchenObjectParent
     public static event EventHandler OnAnyPlayerSpawned;
     public static event EventHandler OnAnyPlayerPickedupSomething;
 
-    public static void ResetStaticData()
-    {
-        OnAnyPlayerSpawned = null;
-        OnAnyPlayerPickedupSomething = null;
-    }
+    public event EventHandler OnPickedupSomething;
+
+    public class OnSelectedCounterChangedEventArgs : EventArgs { public BaseCounter selectedCounter; }
+    public event EventHandler<OnSelectedCounterChangedEventArgs> OnSelectedCounterChanged;
 
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private LayerMask counterLayerMask;
     [SerializeField] private LayerMask collisionLayerMask;
     [SerializeField] private Transform kitchenObjectHoldPoint;
-
-    public event EventHandler OnPickedupSomething;
-
-    public event EventHandler<OnSelectedCounterChangedEventArgs> OnSelectedCounterChanged;
-    public class OnSelectedCounterChangedEventArgs : EventArgs
-    {
-        public BaseCounter selectedCounter;
-    }
+    [SerializeField] private PlayerVisual playerVisual;
 
     public bool IsWalking { get; private set; }
     private Vector3 lastInteractDir;
     private BaseCounter selectedCounter;
     private KitchenObject kitchenObject;
+
+    public static void ResetStaticData()
+    {
+        OnAnyPlayerSpawned = null;
+        OnAnyPlayerPickedupSomething = null;
+    }
 
     public override void OnNetworkSpawn()
     {
@@ -59,6 +57,12 @@ public class PlayerController : NetworkBehaviour, IKitchenObjectParent
         InputHandler.Instance.OnInteractAltAction += OnInteractAltAction;
     }
 
+    private void OnDisable()
+    {
+        InputHandler.Instance.OnInteractAction -= OnInteractAction;
+        InputHandler.Instance.OnInteractAltAction -= OnInteractAltAction;
+    }
+
     private void OnInteractAltAction(object sender, EventArgs e)
     {
         if(!GameManager.Instance.IsGamePlaying()) { return; }
@@ -79,13 +83,12 @@ public class PlayerController : NetworkBehaviour, IKitchenObjectParent
         }
     }
 
-    private void OnDisable()
+    private void Start()
     {
-        InputHandler.Instance.OnInteractAction -= OnInteractAction;
-        InputHandler.Instance.OnInteractAltAction -= OnInteractAltAction;
+        var playerData = KitchenGameMultiplayer.Instance.GetPlayerDataFromClientId(OwnerClientId);
+        playerVisual.SetPlayerColor(KitchenGameMultiplayer.Instance.GetPlayerColor(playerData.colorId));
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (!IsOwner)
