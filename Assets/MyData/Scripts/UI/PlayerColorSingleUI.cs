@@ -18,6 +18,11 @@ public class PlayerColorSingleUI : MonoBehaviour
         UpdateIsSelected();
     }
 
+    private void OnDestroy()
+    {
+        KitchenGameMultiplayer.Instance.OnPlayerDataNetworkListChanged -= KitchenGameMultiplayer_OnPlayerDataNetworkListChanged;
+    }
+
     public void SetColorId(int colorId)
     {
         this.colorId = colorId;
