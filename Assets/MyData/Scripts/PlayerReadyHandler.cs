@@ -43,6 +43,7 @@ public class PlayerReadyHandler : NetworkBehaviour
 
         if (allClientsAreReady)
         {
+            KitchenGameLobby.Instance.DeleteLobby();
             Loader.LoadSceneViaNetwork(Loader.Scene.Gameplay);
         }
     }
