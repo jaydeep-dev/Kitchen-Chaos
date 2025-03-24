@@ -57,7 +57,9 @@ public class KitchenGameMultiplayer : NetworkBehaviour
         NetworkManager.Singleton.ConnectionApprovalCallback += NetworkManager_OnConnectionApprovalCallback;
         NetworkManager.Singleton.OnClientConnectedCallback += NetworkManager_Server_OnClientConnectedCallback;
         NetworkManager.Singleton.OnClientDisconnectCallback += NetworkManager_Server_OnClientDisconnectCallback;
-        NetworkManager.Singleton.StartHost();
+        var isHosted = NetworkManager.Singleton.StartHost();
+
+        Debug.Log($"Hosted: {isHosted}");
     }
 
     private void NetworkManager_Server_OnClientDisconnectCallback(ulong clientId)
