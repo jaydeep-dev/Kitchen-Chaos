@@ -8,11 +8,12 @@ using UnityEngine.SceneManagement;
 
 public class KitchenGameMultiplayer : NetworkBehaviour
 {
+    public const int MAX_PLAYER_COUNT = 4;
     public static KitchenGameMultiplayer Instance { get; private set; }
+    public static bool playMultiplayer = false;
+    private const string PLAYER_PREF_PLAYER_NAME_KEY = "Player Name";
 
     public PlayerColorSO playerColorSO;
-    public const int MAX_PLAYER_COUNT = 4;
-    private const string PLAYER_PREF_PLAYER_NAME_KEY = "Player Name";
 
     public event EventHandler OnTryingToJoin;
     public event EventHandler OnFailedToJoin;
@@ -34,6 +35,16 @@ public class KitchenGameMultiplayer : NetworkBehaviour
 
         playerDataNetworkList = new();
         playerDataNetworkList.OnListChanged += PlayerDataNetworkList_OnListChanged;
+    }
+
+    private void Start()
+    {
+        if (!playMultiplayer)
+        {
+            // Single Player
+            StartHost();
+            Loader.LoadSceneViaNetwork(Loader.Scene.Gameplay);
+        }
     }
 
     public string GetPlayerName()
