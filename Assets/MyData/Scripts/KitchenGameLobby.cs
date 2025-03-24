@@ -17,6 +17,14 @@ public class KitchenGameLobby : MonoBehaviour
 {
     private const string KEY_RELAY_JOIN_CODE = "relayJoinCode";
 
+#if UNITY_WEBGL
+    private const string NETWORK_ENCRYPTION_KEY = "wss";
+    private bool isUsingWebSockets = true;
+#else
+    private const string NETWORK_ENCRYPTION_KEY = "dtls";
+    private bool isUsingWebSockets = false;
+#endif
+
     public static KitchenGameLobby Instance { get; private set; }
 
     public event EventHandler OnCreateLobbyStarted;
@@ -197,7 +205,8 @@ public class KitchenGameLobby : MonoBehaviour
 
             Debug.Log("Lobby data updated with relay join code");
 
-            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, "dtls"));
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, NETWORK_ENCRYPTION_KEY));
+            NetworkManager.Singleton.GetComponent<UnityTransport>().UseWebSockets = isUsingWebSockets;
 
             KitchenGameMultiplayer.Instance.StartHost();
             Loader.LoadSceneViaNetwork(Loader.Scene.CharacterSelection);
@@ -232,11 +241,8 @@ public class KitchenGameLobby : MonoBehaviour
         {
             joinedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
 
-            var relayJoinCode = joinedLobby.Data[KEY_RELAY_JOIN_CODE].Value;
+            await SetupJoinRelayConnection();
 
-            var joinAllocation = await JoinRelay(relayJoinCode);
-
-            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, "dtls"));
             KitchenGameMultiplayer.Instance.StartClient();
         }
         catch (LobbyServiceException error)
@@ -253,11 +259,8 @@ public class KitchenGameLobby : MonoBehaviour
         {
             joinedLobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode);
 
-            var relayJoinCode = joinedLobby.Data[KEY_RELAY_JOIN_CODE].Value;
+            await SetupJoinRelayConnection();
 
-            var joinAllocation = await JoinRelay(relayJoinCode);
-
-            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, "dtls"));
             KitchenGameMultiplayer.Instance.StartClient();
         }
         catch (LobbyServiceException error)
@@ -274,11 +277,8 @@ public class KitchenGameLobby : MonoBehaviour
         {
             joinedLobby = await LobbyService.Instance.JoinLobbyByIdAsync(lobbyId);
 
-            var relayJoinCode = joinedLobby.Data[KEY_RELAY_JOIN_CODE].Value;
+            await SetupJoinRelayConnection();
 
-            var joinAllocation = await JoinRelay(relayJoinCode);
-
-            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, "dlts"));
             KitchenGameMultiplayer.Instance.StartClient();
         }
         catch (LobbyServiceException error)
@@ -286,6 +286,16 @@ public class KitchenGameLobby : MonoBehaviour
             Debug.Log(error);
             OnJoinFailed?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    private async Task SetupJoinRelayConnection()
+    {
+        var relayJoinCode = joinedLobby.Data[KEY_RELAY_JOIN_CODE].Value;
+
+        var joinAllocation = await JoinRelay(relayJoinCode);
+
+        NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, NETWORK_ENCRYPTION_KEY));
+        NetworkManager.Singleton.GetComponent<UnityTransport>().UseWebSockets = isUsingWebSockets;
     }
 
     public async void DeleteLobby()
